@@ -7,7 +7,7 @@
 [image2]: ./test_images_output/canny_image_solidWhiteCurve.jpg "CannyEdgeDetected"
 
 
-[**Project 1 - Setting up Google Cloud Platform Virtual Environment**](./Project_01/_README.md) 
+[**Project 1 - Setting up Google Cloud Platform Virtual Environment**](./Project_01/README.md) 
 
 The goals of this project are:
 * Google Cloud Platform offers attractive features and good pricing, where I am aiming to duplicate the work I do on my PC as well run the deep learning projects instead of AWS.
