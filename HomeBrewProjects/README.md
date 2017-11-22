@@ -1,7 +1,6 @@
 # **Homebrew Projects** 
 ### Zikri Bayraktar, Ph.D.
 ---
-[//]: # (Image References)
 
 [**Project 1 - Setting up Google Cloud Platform Virtual Environment**](./Project_01/README.md) 
 <br>
@@ -17,3 +16,7 @@ The goals of this project are:
 The goals of this project are:
 * Raspberry Pi (RP) is a low cost computer suitable for various homebrew projects. I aim to install all required software and the camera so that I can test the codes I write for the SDC nanodegree in real-time.
 * Explore other ideas with the RP and the computer vision.
+
+---
+DISCLAIMER:  Any information listed on these pages are educational purposes only. I do not guarantee it is bug free or it will even work for
+you. Do not use in production environment nor in safety related environments. Use at your own risk!
