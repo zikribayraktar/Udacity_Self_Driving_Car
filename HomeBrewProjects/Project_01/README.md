@@ -26,12 +26,14 @@ Once we are on the GCP console, we need to set up a virtual machine (VM). I'll s
 Find the menu on the left side of the console. Click on "Compute Engine" and then "VM Instances".
 Click on "Create Instance" and select the specs of your VM. We need to give a name to the VM and select
 the region. For "Machine Type", I selected 2 vCPUs, and for "Disk", I selected 10 GB with Ubuntu 16.04 LTS.
-<br>
+
+<br><br>
 It will take a minute for GCP to initialize your VM and then you are good to go. It will look like this:
+
 ![GCP_VM_Instance][image2]
 
 <br>
-I blocked out the IPs. Note that External IP shown for your active VM is what we will use to connect to.
+I blocked out the IPs on purpose. Note that External IP shown for your active VM is what we will use to connect to.
 Also note the green check mark on the left hand side of your VM. It shows your VM is active and incurring cost.
 <b>Make sure to stop your VM once you are done using it. Otherwise, it will continue running and GCP will charge you.</b>
 To stop the VM, simply click on the three dots menu next to the VM, choose Stop option as seen above. Your VM will be still
