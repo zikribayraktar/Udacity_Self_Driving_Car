@@ -1,79 +1,277 @@
-# **Finding Lane Lines on the Road** 
+# **Traffic Sign Recognition via Deep Convolutional Neural Network ** 
 
-### Zikri Bayraktar
+## Writeup
+
+### by Zikri Bayraktar, Ph.D.
 
 ---
 
-**Finding Lane Lines on the Road**
+**Build a Traffic Sign Recognition Classifier Project**
 
 The goals / steps of this project are the following:
-* Make a pipeline that finds lane lines on the road, and fit a straight line to annotate them.
-* Reflect on your work in a written report describing the challenges addressed and any known shortcomings.
+* Load the data set (see below for links to the project data set)
+* Explore, summarize and visualize the data set
+* Design, train and test a model architecture
+* Use the model to make predictions on new images
+* Analyze the softmax probabilities of the new images
+* Summarize the results with a written report
 
 
 [//]: # (Image References)
 
-[image1]: ./test_images_output/gray_image_solidWhiteCurve.jpg "Grayscale"
-[image2]: ./test_images_output/canny_image_solidWhiteCurve.jpg "CannyEdgeDetected"
-[image3]: ./test_images_output/masked_image_solidWhiteCurve.jpg
-[image4]: ./test_images_output/with_lines_solidWhiteCurve.jpg
-[image5]: ./test_images_output/solidWhiteCurve.jpg
-   
+[image1]: ./examples/histogram_of_input.png "Histogram"
+[image2]: ./examples/Sample_Signs.png "Sample Signs"
+[image3]: ./examples/Data_Augmentation.png "Data Augmentation"
+[image4]: ./examples/LeNET.png "LeNET"
+[image5]: ./examples/New_Images_Normalized.png "New Images Normalized"
+[image6]: ./examples/New_Image_01.png "New Sign 01"
+[image7]: ./examples/New_Image_02.png "New Sign 02"
+[image8]: ./examples/New_Image_03.png "New Sign 03"
+[image9]: ./examples/New_Image_04.png "New Sign 04"
+[image10]: ./examples/New_Image_05.png "New Sign 05"
+[image11]: ./examples/New_Image_06.png "New Sign 06"
+[image12]: ./examples/New_Image_07.png "New Sign 07"
+[image13]: ./examples/New_Image_08.png "New Sign 08"
+[image14]: ./examples/New_Image_09.png "New Sign 09"
+[image15]: ./examples/New_Image_10.png "New Sign 10"
+[image16]: ./examples/New_Image_11.png "New Sign 11"
+[image17]: ./examples/New_Image_12.png "New Sign 12"
+[image18]: ./examples/New_Image_13.png "New Sign 13"
+[image19]: ./examples/New_Image_14.png "New Sign 14"
+
+
+
+## Rubric Points
+### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/481/view) individually and describe how I addressed each point in my implementation.  
+
 ---
+### Writeup / README
 
-### Code
+#### 1. Here is the link to my [project code](./Traffic_Sign_Classifier.ipynb).  I completed this work on AWS GPU g2-2xlarge instances.
 
-The code for this project can be found [here](P1_Zikri.ipynb) 
+### Data Set Summary & Exploration
 
-### Reflection
+#### 1. [German Traffic Signs Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset) was collected and resized by other researchers and we are provided with pickle files of dictionaries with keys of 'features', 'labels', 'sizes' and 'coords'.
+Data was pre-split into three (3) Pickle files; one for training, one for validation and one for testing. 
 
-### 1. Describe of the pipeline. 
+I used simple python commands to figure out the shape of the data sets summarized as follows:
 
-My pipeline contains following steps:
-> First, I converted the images to grayscale:
+* The size of training set is 34799 examples
+* The size of the validation set is 4410 examples
+* The size of test set is 12630 examples
+* The shape of a traffic sign image is 32x32
+* The number of unique classes/labels in the data set is 43.
 
-![grayscale_image][image1]
+Code block for this is as follows:
+```python
+# TODO: Number of training examples
+n_train = X_train.shape[0]
+# TODO: Number of validation examples
+n_validation = X_valid.shape[0]
+# TODO: Number of testing examples.
+n_test = X_test.shape[0]
+# TODO: What's the shape of an traffic sign image?
+image_shape = (X_train.shape[1],X_train.shape[2])
+# TODO: How many unique classes/labels there are in the dataset.
+n_classes = len(np.unique(np.concatenate((y_train, y_valid, y_test), axis=0)))
 
->> Then, applied Gaussian filter to the grayscale image and passed the image to Canny edge detection:
+```
 
-![canny_image][image2]
+#### 2. Exploratory analysis is important step in understanding the class imbalance in the data sets. Using the 'collections.Counter' command, we can figure out how many examples there are in each datasets. 
+Here is an exploratory histogram visualization of the data set showing how each label is distributed. There is a clear class imbalance for all three datasets.
 
->>> Once, the edges detected, a mask is applied to filter out the regions beyond the Region of Interest (ROI). ROI is simply the area where we hope to find the lane lines.
+![alt text][image1]
 
-![ROI_image][image3]
+I also plotted a handful of the input images to view what kind of inputs that we are dealing with. Couple of things jump out. (1) Illumination is different from image to image. (2) Same sign may have zoomed or rotated. (3) There might be other background information other than the sign itself.
+All of these observations can help us to decide how to augment the input data sets.
+![alt_text][image2]
 
->>>> The masked image is passed to Hough transform to identify the coordinates of the lines. Using the coordinates, I computed the slope of each line and based on the slope, I applied filtering. Lines with negative slope belongs to left side of the masked image and slopes with positive sign belongs to right side. To eliminate horizontal lines, I filtered out slope magnitute less than 0.35 (i.e. <b>|slope|<0.35</b>). This removed the horizontal line coordinates providing more stable lane line detection.  Below image displays the lane lines in sections.
+Code block for exploratory analysis is below:
+```python
+# How many examples per class:
+print('How many examples per class in trainig dataset:')
+print(Counter(y_train))
 
-![Sectioned_lane_lines][image4]
+fig=plt.figure(figsize=(12,3))
+for i in range(1,15):
+    index = random.randint(0, len(X_train))
+    imageN = X_train[index].squeeze()
+    fig.add_subplot(2, 7, i)
+    plt.imshow(imageN)
+plt.show()
 
->>>>> Next steps is a little algebra. First, I find the averaged coordinates of the left lines so that I can utilize this center point to fit a line that intersects the bottom of the image. Applied the same technique to the right lines so that the final image will have straight line fitted from the bottom of the image.  I also computed the furthest point of the lines, so that the line can be extended. Instead of extrapolating, I simply used the furthest point identified by the Hough transform. Once, all these computed, I combined the original image with the lane line prediction from the pipeline. I plot a green line on the left, and a blue line on the right.
+# Plot the histogram of class labels:
+plt.figure(figsize=(10,4))
+plt.hist([y_test, y_train, y_valid], bins=43)
+plt.title('Histogram of Classes')
+plt.legend(['Test', 'Train', 'Validation'])
+```
 
-![final_image][image5]
+### Design and Test a Model Architecture
+
+#### As a first step, I normalized so that the data has mean zero and equal variance. For image data, (pixel - 128)/ 128 is a quick way to approximately normalize the data and used in this project. Then, I rotated the image 90, 180, 270 degrees. Finally, I added 5% noise to the normalized dataset.
+
+Here is an example of a traffic sign image on the left along with the augmented images. Second image is the normalized one, third one is rotated 90 degrees, fourth one is rotated 180 degrees, fifth one is rotated 270 degrees and the final one is noise added.
+
+![alt text][image3]
+
+Code block for data augmentation is below:
+```python
+from sklearn.utils import shuffle
+import skimage.transform
+
+# Normalize the training data:
+for i in range(X_train.shape[0]):
+    X_trainN[i] = normalizeImage(X_train[i])
+
+# Normalize the validation set:
+for i in range(X_valid.shape[0]):
+    X_validN[i] = normalizeImage(X_valid[i])
+
+# Normalize the test set:
+for i in range(X_test.shape[0]):
+    X_testN[i] = normalizeImage(X_test[i])
+
+# Rotate 90/180/270 degrees:
+for i in range(X_train.shape[0]):
+    X_train90[i]  = skimage.transform.rotate(X_trainN[i], 90)
+    X_train180[i] = skimage.transform.rotate(X_trainN[i], 180)
+    X_train270[i] = skimage.transform.rotate(X_trainN[i], 270)
+    
+# Add 5% noise:
+for i in range(X_train.shape[0]):
+    X_trainNoise[i] = X_trainN[i] + 0.05 * np.random.randn(*X_trainN[i].shape)
+	
+## CONCANATE DATA:
+X_train_Comb = np.concatenate((X_trainN, X_trainNoise), axis=0)
+y_train_Comb = np.concatenate((y_train,  y_train), axis=0)
+```
+
+#### 2. To tackle this classification problem, I picked the LeNET structure that had been utilized for MNIST digit recognition. Following image illustrates how the LeNET looks like. 
+
+![alt text][image4]
+
+The final model architecture consisted of the following layers:
+
+| Layer         		|     Description	        					| 
+|:---------------------:|:---------------------------------------------:| 
+| Input         		| 32x32x3 RGB image   							| 
+| Convolution 5x5     	| 1x1 stride, valid padding, outputs 28x28x24 	|
+| RELU					|												|
+| Max pooling	      	| 2x2 stride,  outputs 14x14x24 				|
+| Convolution 5x5     	| 1x1 stride, valid padding, outputs 10x10x32 	|
+| RELU					|												|
+| Max pooling	      	| 2x2 stride,  outputs 5x5x32	 				|
+| Fully connected		| outputs 400  									|
+| Fully connected		| outputs 100  									|
+| Fully connected		| outputs 43   									|
+| Softmax				| etc.        									|
+|						|												| 
+
+Code block for the final network architecture that was summarized in the table above is shown below:
+```python
+def LeNet(x):    
+    # Arguments used for tf.truncated_normal, randomly defines variables 
+	# for the weights and biases for each layer
+    mu = 0
+    sigma = 0.1
+    
+    # SOLUTION: Layer 1: Convolutional. Input = 32x32x3. Output = 28x28x24.
+    conv1_W = tf.Variable(tf.truncated_normal(shape=(5, 5, 3, 24), mean = mu, stddev = sigma))
+    conv1_b = tf.Variable(tf.zeros(24))
+    conv1   = tf.nn.conv2d(x, conv1_W, strides=[1, 1, 1, 1], padding='VALID') + conv1_b
+
+    # SOLUTION: Activation.
+    conv1 = tf.nn.relu(conv1)
+
+    # SOLUTION: Pooling. Input = 28x28x24. Output = 14x14x24.
+    conv1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Layer 2: Convolutional. Output = 10x10x32.
+    conv2_W = tf.Variable(tf.truncated_normal(shape=(5, 5, 24, 32), mean = mu, stddev = sigma))
+    conv2_b = tf.Variable(tf.zeros(32))
+    conv2   = tf.nn.conv2d(conv1, conv2_W, strides=[1, 1, 1, 1], padding='VALID') + conv2_b
+    
+    # SOLUTION: Activation.
+    conv2 = tf.nn.relu(conv2)
+
+    # SOLUTION: Pooling. Input = 10x10x32. Output = 5x5x32.
+    conv2 = tf.nn.max_pool(conv2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')
+
+    # SOLUTION: Flatten. Input = 5x5x16. Output = 800.
+    fc0   = flatten(conv2)
+    
+    # SOLUTION: Layer 3: Fully Connected. Input = 800. Output = 400.
+    fc1_W = tf.Variable(tf.truncated_normal(shape=(800, 400), mean = mu, stddev = sigma))
+    fc1_b = tf.Variable(tf.zeros(400))
+    fc1   = tf.matmul(fc0, fc1_W) + fc1_b
+    
+    # SOLUTION: Activation.
+    fc1    = tf.nn.relu(fc1)
+
+    # SOLUTION: Layer 4: Fully Connected. Input = 400. Output = 84.
+    fc2_W  = tf.Variable(tf.truncated_normal(shape=(400, 84), mean = mu, stddev = sigma))
+    fc2_b  = tf.Variable(tf.zeros(84))
+    fc2    = tf.matmul(fc1, fc2_W) + fc2_b
+    
+    # SOLUTION: Activation.
+    fc2    = tf.nn.relu(fc2)
+
+    # SOLUTION: Layer 5: Fully Connected. Input = 84. Output = 43.
+    fc3_W  = tf.Variable(tf.truncated_normal(shape=(84, 43), mean = mu, stddev = sigma))
+    fc3_b  = tf.Variable(tf.zeros(43))
+    logits = tf.matmul(fc2, fc3_W) + fc3_b
+    
+    return logits
+```
+
+#### 3. The model is trained for 15 epochs to achieve 94% validation accuracy. Adam optimizer is used with learning rate of 0.0025. The batch size of 128 worked well.
+
+.
+   
+#### 4. For finding a solution and getting the validation set accuracy to be at least 0.93, I utilized the LeNET architecture and changed some of its settings. LeNET seemed to be sufficient architecture to tackle this problem due to its similar success with the MNIST datasets.
+
+My final model results were:
+* validation set accuracy of 94%
+* test set accuracy of 93%
+
+I kept the 3 color channels of the input images and played with the fully-connected layers as I monitored the validation and test accuracies. 
+
+My observation was that the data augmentation has to be done properly. Blindly applying any kind of transformation will hinder the training.
+Data normalization helps as well as adding noise to the input images provides robustness. I did not see any need for dropout layers since did not 
+observe much overfitting.
 
 
-Finally, I applied the pipeline to the following two videos:
+### Test a Model on New Images
 
-[Video1](test_videos_output/solidWhiteRight.mp4) <br>
-[Video2](test_videos_output/solidYellowLeft.mp4) <br><br>
+#### 1. I downloaded 14 new images from the web to test the trained network on German traffic signs. Below are these normalized images.
 
-I also tackled the optional challenge video, which let to some of the methods I described above.<br>
-[Challenge Video3](test_videos_output/challenge.mp4) <br><br>
+![alt text][image5] 
+
+The first image might be difficult to classify because they are randomly picked from the web which may lead to different values for the color channels.
+Also, the shading and the location of the signs within the 32x32 pixels might be not known in the training set. While normalization help, model may not
+generalize for these randomly picked and scaled images.
 
 
-### 2. Identify potential shortcomings with your current pipeline and suggest solutions
+#### 2. Model prediction for these signs and how certain it is shown below with the images. Accuracy of 85% is achieved on these new 14 images. 
 
-The optional challenge video actually showed some of shortcomings of my initial approach, which I incorporated int my code to handle these situations. Following shortcomings came out of the challenge video:
+It appears to be that the "traffic light" sign and 'crosswalk' signs are mistaken as "general caution". 
 
-1. The video size was different then the initial test images and videos. I had to change the mask coordinates to variables instead of fixed values so that it can scale with the image dimensions of different video sizes. (I did not want to tackle this by re-sizing any input video to be the same. I wanted to keep the video in its original size and adjust the masking accordingly.) <br><br>
+#### 3. Below, I plotted the softmax probabilities as bar charts for each of the images and provided the top 5 softmax probabilities for each image along with the sign type of each probability. 
 
-2. The challenge video includes a part of the car's hood at the bottom of each frames. This created horizontal edge detection, hence I implemented removal of lines with |slope|<0.35.  This removed the detection of the hood as well as some of the other horizontal lines identified on the road. <br><br>
+The code for making predictions on my final model is located towards the end of the Ipython notebook.
 
-3. The original images and videos have great contrast between lane lines and the road. However, the challenge video showed that the contrast may vary depending on the road type. Hence, in some frames, lane lines were not identified, which led to pipeline to crash due to empty arrays. I overcame this by simply not drawing any lines, if the Hough transform did not identified any coordinates. This is a simple work around. Real solution would be to carry over information from frame to frame. If we can estimate where the lane lines would be from previous frames, we can draw that line approximately. However, in its current form, pipeline does not allow information passing between two consequent frames. <br><br>
+For the all images, the model seems to be very certain on the prediction even for the wrong prediction as shown for each of the images below.
 
-4. One short coming that I did not address is again due to the lack of contrast in the images, which can be due to shadows of the trees or simply type of the road. Asphalt roads are darker which creates good contrast with lane lines hence edges are detected very well. However, on concrete roads, lane lines cannot be distinguished properly. One solution could be to look at the contrast histrogram of each frame and come up with a auto-contrast adjusting method, or some contrast thresholding. That way, lane lines can be identified much better. (I assume similar issue could happend on snow; no contrast no lanes detected) <br><br>
-
-5. The challenge video showed that the roads are not always straight, they usually bend. One of the short comings of the pipeline is that it tries to fit a straight line to a curved road. You can see from my solution to the challenge video that this creates a solution that is not stable. Lines keep jumping around. One solution could be that we can fit piece-wise linear lines to the curve, and even better solution would be actually fitting a polynomial curve. However, I did not address this problem. <br><br>
-
-6. Another potential shortcoming is the presence of other cars. If a car enters into the Region of Interest (ROI) where we try to identify the lane lines, this can create many artificial edges which needs to handled properly so that they are not used in the computation of the lane lines. Similar issues with pot holes and road quality issues as well as problems with the old vs new lane drawings, where road crews may have drawn somewhat different lane lines than old lines. Any issue with contrast, will confuse this pipeline. <br><br>
+![alt text][image6]  ![alt text][image7] 
+![alt text][image8]  ![alt text][image9] 
+![alt text][image10]  ![alt text][image11] 
+![alt text][image12]  ![alt text][image13] 
+![alt text][image14]  ![alt text][image15]
+![alt text][image16]  ![alt text][image17]
+![alt text][image18]  ![alt text][image19]
+  
+### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
+#### 1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
 
 
