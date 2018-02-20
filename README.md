@@ -13,3 +13,6 @@ Below, you can find my projects in this nanodegree program with a short descript
 [Project 4](./Term1/P4) - Advanced lane line detection with advanced computer vision techniques.
 
 Project 5 - Vehicle detection via deep learning.
+
+## Homebrew Projects
+[Project 1](./HomeBrewProjects/Project_01) - Setting up Google Cloud Platform VM to carry out projects on the cloud.
