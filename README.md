@@ -6,7 +6,8 @@ Below, you can find my projects in this nanodegree program with a short descript
 ## Term 1
 [Project 1](./Term1/P1) - Road lane line detection with computer vision techniques.
 
-[Project 2](./Term1/P2) - German traffic sign classification via deep convolutional neural networks.
+[Project 2](./Term1/P2/Traffic_Sign_Classifier.ipynb) - German traffic sign classification via deep convolutional neural networks (Tensorflow version).
+[Project 2](./Term1/P2/German_Traffic_Sign_small_Keras.ipynb) - German traffic sign classification via deep convolutional neural networks (Keras version).
 
 [Project 3](./Term1/P3) - Behavioral cloning, i.e. car steering angle prediction via deep convolutional neural networks.
 
